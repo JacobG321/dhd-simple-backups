@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Simple Backups
  * Description: A simple plugin for backing up WordPress content and database.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Digital Home Developers
  * Author URI: https://digitalhomedevelopers.com
  */
@@ -11,7 +11,7 @@ if (!defined('WPINC')) {
     die;
 }
 
-$includes = ['backup_wp_content_and_db', 'import_wp_content'];
+$includes = ['backup_wp_content_and_db'];
 $dir = plugin_dir_path(__FILE__);
 $missing_files = [];
 
@@ -58,35 +58,10 @@ function sb_options()
     echo '</div>';
 }
 
-// Child page for imports
-function sb_import_page()
-{
-    if (isset($_GET['import_success'])) {
-        echo '<div class="updated"><p>Import successful!</p></div>';
-    }
-    echo '<div class="wrap">';
-    echo '<h2>Import Backup</h2>';
-    echo '<form id="file-upload-form" method="post" action="' . admin_url('admin-post.php') . '" enctype="multipart/form-data">';
-    echo '<input type="hidden" name="action" value="sb_import_action">';
-    echo '<input type="file" name="backup_file" required>';
-    submit_button('Import Backup');
-    echo '</form>';
-    echo '</div>';
-}
-
-function sb_enqueue_scripts($hook_suffix) {
-    if($hook_suffix == 'simple-backups_page_simple-backups-import') { // Adjust the hook suffix based on your plugin's page structure
-        wp_enqueue_script('sb-import-script', plugins_url('/assets/js/import_wp_content.js', __FILE__), array('jquery'), null, true);
-        wp_localize_script('sb-import-script', 'adminAjaxUrl', admin_url('admin-ajax.php'));
-    }
-}
-add_action('admin_enqueue_scripts', 'sb_enqueue_scripts');
-
 
 // Add menu page
 add_action('admin_menu', 'sb_menu');
 function sb_menu()
 {
     add_menu_page('Simple Backups', 'Backup', 'manage_options', 'simple-backups', 'sb_options');
-    add_submenu_page('simple-backups', 'Import Backup', 'Import', 'manage_options', 'simple-backups-import', 'sb_import_page');
 }

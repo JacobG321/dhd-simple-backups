@@ -5,7 +5,8 @@ if (!defined('WPINC')) {
 }
 
 add_action('admin_post_sb_import_action', 'handle_sb_import_action');
-function handle_sb_import_action() {
+function handle_sb_import_action()
+{
     if (!current_user_can('manage_options')) {
         wp_die(__('You do not have sufficient permissions to access this page.'));
     }
@@ -15,8 +16,10 @@ function handle_sb_import_action() {
     }
 
     $uploadedfile = $_FILES['backup_file'];
+    // Enhance error message to include detected MIME type
     if ($uploadedfile['type'] != 'application/zip') {
-        wp_die('Please upload a valid .zip file.');
+        $detected_type = esc_html($uploadedfile['type']); // Escaping for security
+        wp_die("Please upload a valid .zip file. Detected file type: {$detected_type}.");
     }
 
     $upload_overrides = ['test_form' => false];

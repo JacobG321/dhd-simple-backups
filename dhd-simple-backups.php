@@ -50,7 +50,7 @@ function sb_options()
     }
 
     echo '<div class="wrap">';
-    echo '<h2>My Backup Plugin</h2>';
+    echo '<h2>Simple Backups</h2>';
     echo '<form action="' . admin_url('admin-post.php') . '" method="post">';
     echo '<input type="hidden" name="action" value="sb_backup_action">';
     submit_button('Backup Now');

@@ -22,19 +22,32 @@ function sb_php_export_database($dump_file) {
 
         $rows = $wpdb->get_results("SELECT * FROM `{$table_name}`", ARRAY_A);
         if ($rows) {
-            $sql_data .= "INSERT INTO `{$table_name}` VALUES \n";
-            $row_entries = [];
             foreach ($rows as $row) {
+                $sql_data .= "INSERT INTO `{$table_name}` VALUES (";
                 $row_vals = [];
                 foreach ($row as $key => $value) {
-                    $value = addslashes($value);
-                    $value = str_replace("\n", "\\n", $value);
-                    $row_vals[] = "'{$value}'";
+                    if (is_null($value)) {
+                        $row_vals[] = 'NULL';
+                    } else {
+                        // Check if the value is a JSON string
+                        if (is_string($value) && (substr($value, 0, 1) === '{' || substr($value, 0, 1) === '[')) {
+                            // Attempt to decode to ensure it's valid JSON
+                            if (null !== json_decode($value)) {
+                                // It's JSON, escape it properly for SQL
+                                $value = $wpdb->_real_escape($value);
+                            }
+                        } else {
+                            // For regular strings, continue using normal escape
+                            $value = $wpdb->_real_escape($value);
+                        }
+                        $value = str_replace("\n", "\\n", $value);
+                        $row_vals[] = "'" . $value . "'";
+                    }
                 }
-                $row_entries[] = "(" . implode(", ", $row_vals) . ")";
-            }
-            $sql_data .= implode(",\n", $row_entries);
-            $sql_data .= ";\n\n";
+                $sql_data .= implode(", ", $row_vals);
+                $sql_data .= ");\n";
+            }            
+            $sql_data .= "\n";
         }
     }
 
@@ -47,7 +60,7 @@ function sb_php_export_database($dump_file) {
 
 function sb_backup_wp_content_and_db() {
     $uploads = wp_upload_dir();
-    $backup_dir = $uploads['basedir'] . '/my_backups';
+    $backup_dir = $uploads['basedir'] . '/sb_backups';
     if (!file_exists($backup_dir)) {
         wp_mkdir_p($backup_dir);
     }

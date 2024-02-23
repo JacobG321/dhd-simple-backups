@@ -22,7 +22,7 @@
 This plugin is currently in development and may not be suitable for use in production environments. Use at your own risk.
 
 ## Notes
-1. This may not work with all database setups and will likely require a manual edit of the sql file for the import to work. The main sticking point for me was the "SQL_MODE". This is what will likely need to be adjusted. The issue could be addressed by an import feature by grabbing the current settings and altering the current SQL file to use them.
+This may not work with all database setups and will likely require a manual edit of the sql file for the import to work. The main sticking point for me was the "SQL_MODE". This is what will likely need to be adjusted. The issue could be addressed by an import feature by grabbing the current settings and altering the current SQL file to use them.
 
 ## Ideas/New Features
 1. A list of already created backups.

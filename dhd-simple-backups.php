@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Simple Backups
  * Description: A simple plugin for backing up WordPress content and database.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Digital Home Developers
  * Author URI: https://digitalhomedevelopers.com
  */

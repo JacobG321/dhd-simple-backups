@@ -4,9 +4,13 @@ if (!defined('WPINC')) {
     die;
 }
 
-function sb_php_export_database($dump_file) {
+function php_export_database($dump_file) {
     global $wpdb;
+    
+    // Start the SQL dump content with the mode and timezone settings
     $sql_data = "-- PHP-based MySQL Dump\n";
+    $sql_data .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
+    $sql_data .= "SET time_zone = \"+00:00\";\n";
     $sql_data .= "--\n";
     $sql_data .= '-- Created: ' . date('Y-m-d H:i:s') . "\n";
     $sql_data .= '-- Database: `' . DB_NAME . "`\n\n";
@@ -16,49 +20,37 @@ function sb_php_export_database($dump_file) {
         $table_name = $table[0];
         $sql_data .= "-- Table: `{$table_name}`\n";
         $sql_data .= "DROP TABLE IF EXISTS `{$table_name}`;\n";
-
         $create_table = $wpdb->get_row("SHOW CREATE TABLE `{$table_name}`", ARRAY_N);
         $sql_data .= $create_table[1] . ";\n\n";
 
         $rows = $wpdb->get_results("SELECT * FROM `{$table_name}`", ARRAY_A);
         if ($rows) {
+            $sql_data .= "INSERT INTO `{$table_name}` VALUES \n";
+            $row_entries = [];
             foreach ($rows as $row) {
-                $sql_data .= "INSERT INTO `{$table_name}` VALUES (";
                 $row_vals = [];
                 foreach ($row as $key => $value) {
-                    if (is_null($value)) {
-                        $row_vals[] = 'NULL';
-                    } else {
-                        // Check if the value is a JSON string
-                        if (is_string($value) && (substr($value, 0, 1) === '{' || substr($value, 0, 1) === '[')) {
-                            // Attempt to decode to ensure it's valid JSON
-                            if (null !== json_decode($value)) {
-                                // It's JSON, escape it properly for SQL
-                                $value = $wpdb->_real_escape($value);
-                            }
-                        } else {
-                            // For regular strings, continue using normal escape
-                            $value = $wpdb->_real_escape($value);
-                        }
-                        $value = str_replace("\n", "\\n", $value);
-                        $row_vals[] = "'" . $value . "'";
-                    }
+                    $value = addslashes($value);
+                    $value = str_replace("\n","\\n", $value);
+                    $row_vals[] = "'$value'";
                 }
-                $sql_data .= implode(", ", $row_vals);
-                $sql_data .= ");\n";
-            }            
-            $sql_data .= "\n";
+                $row_entries[] = "(" . implode(", ", $row_vals) . ")";
+            }
+            $sql_data .= implode(",\n", $row_entries);
+            $sql_data .= ";\n\n";
         }
     }
 
     // Save the SQL to a file
     if (!file_put_contents($dump_file, $sql_data)) {
-        return new WP_Error('sb_backup_db_error', __('Could not save database dump.'));
+        return new WP_Error('backup_db_error', __('Could not save database dump.'));
     }
+    
     return true;
 }
 
-function sb_backup_wp_content_and_db() {
+function backup_wp_content_and_db()
+{
     $uploads = wp_upload_dir();
     $backup_dir = $uploads['basedir'] . '/sb_backups';
     if (!file_exists($backup_dir)) {
@@ -90,7 +82,7 @@ function sb_backup_wp_content_and_db() {
 
     // Export Database
     $dump_file = $backup_dir . '/' . 'db-backup-' . $date_format . '.sql';
-    $db_export_result = sb_php_export_database($dump_file);
+    $db_export_result = php_export_database($dump_file);
     if (is_wp_error($db_export_result)) {
         return $db_export_result; // Return the error from database export
     }
@@ -99,7 +91,7 @@ function sb_backup_wp_content_and_db() {
     if ($zip->open($zip_file) === TRUE) {
         $zip->addFile($dump_file, basename($dump_file));
         $zip->close();
-        // Delete the DB dump file, don't want it outside the zip
+        // Optionally, delete the DB dump file if you don't want it outside the zip
         @unlink($dump_file);
     } else {
         return new WP_Error('backup_zip_error', __('Could not add database dump to zip file.'));
@@ -110,16 +102,17 @@ function sb_backup_wp_content_and_db() {
 
 // Hook into WordPress to perform backup on a specific action, e.g., an admin post request
 add_action('admin_post_sb_backup_action', 'handle_sb_backup_action');
-function handle_sb_backup_action() {
+function handle_sb_backup_action()
+{
     if (!current_user_can('manage_options')) {
         wp_die(__('You do not have sufficient permissions to access this page.'));
     }
 
-    $backup_file = sb_backup_wp_content_and_db();
+    $backup_file = backup_wp_content_and_db();
     if (is_wp_error($backup_file)) {
         wp_die($backup_file->get_error_message());
     } else {
-        wp_safe_redirect(admin_url('options-general.php?page=simple-backups&backup_success=1'));
+        wp_safe_redirect(admin_url('admin.php?page=simple-backups&backup_success=1'));
         exit;
     }
 }

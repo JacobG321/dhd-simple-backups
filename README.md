@@ -16,7 +16,7 @@
 ## Usage:
 1. Go to the plugin settings page in the WordPress admin panel.
 2. Click on the "Backup Now" button to create a backup of your website's content and database.
-3. Use the "Import Now" button to import backups whenever needed.
+3. The file's will be backed up in a folder called sb_backups in your Uploads directory.
 
 ## Warning:
 This plugin is currently in development and may not be suitable for use in production environments. Use at your own risk.

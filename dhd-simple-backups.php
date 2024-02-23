@@ -66,13 +66,21 @@ function sb_import_page()
     }
     echo '<div class="wrap">';
     echo '<h2>Import Backup</h2>';
-    echo '<form method="post" action="' . admin_url('admin-post.php') . '" enctype="multipart/form-data">';
+    echo '<form id="file-upload-form" method="post" action="' . admin_url('admin-post.php') . '" enctype="multipart/form-data">';
     echo '<input type="hidden" name="action" value="sb_import_action">';
     echo '<input type="file" name="backup_file" required>';
     submit_button('Import Backup');
     echo '</form>';
     echo '</div>';
 }
+
+function sb_enqueue_scripts($hook_suffix) {
+    if($hook_suffix == 'simple-backups_page_simple-backups-import') { // Adjust the hook suffix based on your plugin's page structure
+        wp_enqueue_script('sb-import-script', plugins_url('/assets/js/import_wp_content.js', __FILE__), array('jquery'), null, true);
+        wp_localize_script('sb-import-script', 'adminAjaxUrl', admin_url('admin-ajax.php'));
+    }
+}
+add_action('admin_enqueue_scripts', 'sb_enqueue_scripts');
 
 
 // Add menu page
